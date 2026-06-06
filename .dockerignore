@@ -1,0 +1,10 @@
+.env
+.git
+.gitignore
+__pycache__/
+*.pyc
+data/
+logs/
+*.zip
+*.tar
+*.tar.gz

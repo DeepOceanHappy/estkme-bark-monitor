@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ESTKme Max 补货监控</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f6f8;
+      --panel: #ffffff;
+      --ink: #20242a;
+      --muted: #64707d;
+      --line: #dfe4ea;
+      --accent: #0b7669;
+      --accent-strong: #064f47;
+      --danger: #b42318;
+      --warn: #9a6700;
+      --ok: #16794c;
+      --shadow: 0 12px 28px rgba(33, 39, 49, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+      font-family: "Segoe UI", "Microsoft YaHei", Arial, sans-serif;
+      letter-spacing: 0;
+    }
+
+    button, input {
+      font: inherit;
+    }
+
+    .app {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 24px 0 32px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 0 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      line-height: 1.2;
+      font-weight: 760;
+    }
+
+    .subtitle {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill {
+      min-width: 132px;
+      padding: 8px 12px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: var(--panel);
+      color: var(--muted);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .pill.ok {
+      border-color: rgba(22, 121, 76, 0.24);
+      color: var(--ok);
+      background: #f0faf5;
+    }
+
+    .pill.wait {
+      border-color: rgba(154, 103, 0, 0.24);
+      color: var(--warn);
+      background: #fff8e7;
+    }
+
+    .pill.error {
+      border-color: rgba(180, 35, 24, 0.24);
+      color: var(--danger);
+      background: #fff3f1;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(360px, 0.95fr);
+      gap: 16px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      font-size: 16px;
+      font-weight: 720;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .fact {
+      min-height: 82px;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fbfcfd;
+    }
+
+    .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 8px;
+    }
+
+    .value {
+      min-height: 28px;
+      overflow-wrap: anywhere;
+      font-size: 20px;
+      line-height: 1.25;
+      font-weight: 720;
+    }
+
+    .value.small {
+      font-size: 15px;
+      font-weight: 620;
+      color: #33404d;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 12px;
+      cursor: pointer;
+      transition: 120ms ease;
+    }
+
+    .button:hover {
+      border-color: #bdc7d2;
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .button.primary:hover {
+      background: var(--accent-strong);
+      border-color: var(--accent-strong);
+    }
+
+    form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .field label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .field input {
+      width: 100%;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      color: var(--ink);
+      padding: 8px 10px;
+      outline: none;
+    }
+
+    .field input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(11, 118, 105, 0.12);
+    }
+
+    .checkline {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .checkline input {
+      width: 17px;
+      height: 17px;
+      accent-color: var(--accent);
+    }
+
+    .status-line {
+      margin-top: 14px;
+      min-height: 22px;
+      color: var(--muted);
+      font-size: 14px;
+      overflow-wrap: anywhere;
+    }
+
+    .logs {
+      display: grid;
+      gap: 8px;
+      max-height: 384px;
+      overflow: auto;
+      padding-right: 4px;
+    }
+
+    .log {
+      display: grid;
+      grid-template-columns: 148px 1fr;
+      gap: 10px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+      color: #33404d;
+      font-size: 14px;
+    }
+
+    .log:last-child {
+      border-bottom: 0;
+    }
+
+    .log-time {
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .log-message {
+      overflow-wrap: anywhere;
+    }
+
+    .level-success {
+      color: var(--ok);
+    }
+
+    .level-warn {
+      color: var(--warn);
+    }
+
+    .level-error {
+      color: var(--danger);
+    }
+
+    @media (max-width: 840px) {
+      .app {
+        width: min(100vw - 20px, 680px);
+        padding-top: 12px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .grid,
+      .field-row,
+      .facts {
+        grid-template-columns: 1fr;
+      }
+
+      .pill {
+        width: 100%;
+      }
+
+      .log {
+        grid-template-columns: 1fr;
+        gap: 4px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="topbar">
+      <div>
+        <h1>ESTKme Max 补货监控</h1>
+        <div class="subtitle" id="summary">正在读取本地监控服务</div>
+      </div>
+      <div class="pill wait" id="buyState">等待检测</div>
+    </header>
+
+    <section class="grid">
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">商品状态</div>
+          <div class="actions">
+            <button class="button primary" id="checkBtn" type="button">立即检查</button>
+            <button class="button" id="refreshBtn" type="button">刷新</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="facts">
+            <div class="fact">
+              <div class="label">商品系列</div>
+              <div class="value" id="productTitle">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">规格</div>
+              <div class="value" id="variantTitle">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">价格</div>
+              <div class="value" id="price">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">库存</div>
+              <div class="value" id="stock">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">状态 / 预售</div>
+              <div class="value small" id="saleMeta">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">检测时间</div>
+              <div class="value small" id="checkedAt">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">下次检测</div>
+              <div class="value small" id="nextCheckAt">-</div>
+            </div>
+            <div class="fact">
+              <div class="label">最近推送</div>
+              <div class="value small" id="lastNotify">-</div>
+            </div>
+          </div>
+          <div class="status-line" id="lastError"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <div class="panel-title">监控设置</div>
+          <button class="button" id="testBarkBtn" type="button">测试 Bark</button>
+        </div>
+        <div class="panel-body">
+          <form id="configForm">
+            <div class="field">
+              <label for="barkKey">Bark Key 或完整 Bark 地址</label>
+              <input id="barkKey" name="bark_key" autocomplete="off" placeholder="例如 xxxxxxxxxxxxx">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="intervalSeconds">检测间隔（秒）</label>
+                <input id="intervalSeconds" name="interval_seconds" type="number" min="15" max="3600" step="1">
+              </div>
+              <div class="field">
+                <label for="variantTitle">监控规格</label>
+                <input id="variantTitleInput" name="variant_title" autocomplete="off">
+              </div>
+            </div>
+            <div class="field">
+              <label for="productApi">商品接口</label>
+              <input id="productApi" name="product_api" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="productPage">商品页面</label>
+              <input id="productPage" name="product_page" autocomplete="off">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="barkServer">Bark 服务</label>
+                <input id="barkServer" name="bark_server" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="barkSound">Bark 铃声</label>
+                <input id="barkSound" name="bark_sound" autocomplete="off">
+              </div>
+            </div>
+            <label class="checkline">
+              <input id="startupNotify" name="notify_on_startup_if_available" type="checkbox">
+              启动时若已有库存也推送
+            </label>
+            <div class="actions">
+              <button class="button primary" type="submit">保存设置</button>
+            </div>
+            <div class="status-line" id="formStatus"></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" style="margin-top:16px;">
+      <div class="panel-header">
+        <div class="panel-title">运行记录</div>
+      </div>
+      <div class="panel-body">
+        <div class="logs" id="logs"></div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    let currentStatus = null;
+
+    function valueOrDash(value) {
+      if (value === null || value === undefined || value === '') return '-';
+      return String(value);
+    }
+
+    function setPill(snapshot, error) {
+      const pill = $('buyState');
+      pill.className = 'pill';
+      if (error) {
+        pill.classList.add('error');
+        pill.textContent = '检测失败';
+        return;
+      }
+      if (!snapshot) {
+        pill.classList.add('wait');
+        pill.textContent = '等待检测';
+        return;
+      }
+      if (snapshot.purchasable) {
+        pill.classList.add('ok');
+        pill.textContent = '可购买';
+        return;
+      }
+      pill.classList.add('wait');
+      pill.textContent = '暂时无货';
+    }
+
+    function render(status) {
+      currentStatus = status;
+      const cfg = status.config || {};
+      const st = status.state || {};
+      const snapshot = st.last_snapshot;
+      const error = st.last_error;
+
+      $('summary').textContent = `本机时间 ${status.server_time || '-'}，间隔 ${cfg.interval_seconds || '-'} 秒`;
+      setPill(snapshot, error);
+
+      $('productTitle').textContent = valueOrDash(snapshot && snapshot.product_title);
+      $('variantTitle').textContent = valueOrDash(snapshot && snapshot.variant_title);
+      $('price').textContent = snapshot ? `¥ ${snapshot.price || '-'}` : '-';
+      $('stock').textContent = valueOrDash(snapshot && snapshot.stock);
+      $('saleMeta').textContent = snapshot ? `状态 ${snapshot.status} / 预售${snapshot.is_presale ? '是' : '否'} / ${snapshot.presale_time}` : '-';
+      $('checkedAt').textContent = valueOrDash(snapshot && snapshot.checked_at);
+      $('nextCheckAt').textContent = valueOrDash(st.next_check_at);
+      $('lastNotify').textContent = st.last_notified_at ? `${st.last_notified_at}：${st.last_notify_reason || ''}` : '-';
+      $('lastError').textContent = error ? `最近错误：${error.message}` : '';
+
+      $('barkKey').value = cfg.bark_key || '';
+      $('intervalSeconds').value = cfg.interval_seconds || 60;
+      $('variantTitleInput').value = cfg.variant_title || 'ESTKme Max';
+      $('productApi').value = cfg.product_api || '';
+      $('productPage').value = cfg.product_page || '';
+      $('barkServer').value = cfg.bark_server || 'https://api.day.app';
+      $('barkSound').value = cfg.bark_sound || '';
+      $('startupNotify').checked = Boolean(cfg.notify_on_startup_if_available);
+
+      const logs = st.logs || [];
+      $('logs').innerHTML = logs.length
+        ? logs.map((log) => `
+            <div class="log">
+              <div class="log-time">${log.time || ''}</div>
+              <div class="log-message level-${log.level || 'info'}">${log.message || ''}</div>
+            </div>
+          `).join('')
+        : '<div class="log"><div class="log-time">-</div><div class="log-message">暂无记录</div></div>';
+    }
+
+    async function loadStatus() {
+      const response = await fetch('/api/status', { cache: 'no-store' });
+      render(await response.json());
+    }
+
+    async function postJson(url, payload = {}) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || '请求失败');
+      return data;
+    }
+
+    $('refreshBtn').addEventListener('click', loadStatus);
+
+    $('checkBtn').addEventListener('click', async () => {
+      $('formStatus').textContent = '正在检查商品状态...';
+      try {
+        await postJson('/api/check');
+        $('formStatus').textContent = '检查完成。';
+      } catch (error) {
+        $('formStatus').textContent = error.message;
+      }
+      await loadStatus();
+    });
+
+    $('testBarkBtn').addEventListener('click', async () => {
+      $('formStatus').textContent = '正在发送测试推送...';
+      try {
+        await postJson('/api/test-bark');
+        $('formStatus').textContent = '测试推送已发送。';
+      } catch (error) {
+        $('formStatus').textContent = error.message;
+      }
+      await loadStatus();
+    });
+
+    $('configForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const form = new FormData(event.currentTarget);
+      const payload = Object.fromEntries(form.entries());
+      payload.interval_seconds = Number(payload.interval_seconds || 60);
+      payload.notify_on_startup_if_available = $('startupNotify').checked;
+
+      $('formStatus').textContent = '正在保存...';
+      try {
+        const data = await postJson('/api/config', payload);
+        $('formStatus').textContent = '已保存。';
+        render(data.status);
+      } catch (error) {
+        $('formStatus').textContent = error.message;
+      }
+    });
+
+    loadStatus();
+    setInterval(loadStatus, 5000);
+  </script>
+</body>
+</html>

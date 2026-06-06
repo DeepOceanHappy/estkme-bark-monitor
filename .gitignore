@@ -1,0 +1,26 @@
+# Secrets and local runtime config
+.env
+config.json
+state.json
+
+# Runtime data
+data/
+logs/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Archives built for manual transfer
+*.zip
+*.tar
+*.tar.gz
