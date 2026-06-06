@@ -130,10 +130,17 @@ def apply_env_config(cfg):
     return cfg
 
 
+def public_config(cfg):
+    visible = dict(cfg)
+    visible["bark_key"] = ""
+    visible["bark_key_configured"] = bool(str(cfg.get("bark_key") or "").strip())
+    return visible
+
+
 def public_status():
     with lock:
         return {
-            "config": dict(config),
+            "config": public_config(config),
             "state": dict(state),
             "server_time": now_text(),
         }
@@ -360,6 +367,8 @@ def update_config(payload):
         for key, value in payload.items():
             if key not in ALLOWED_CONFIG_KEYS:
                 continue
+            if key == "bark_key" and isinstance(value, str) and not value.strip():
+                continue
             if key == "interval_seconds":
                 value = normalize_int(value, DEFAULT_CONFIG["interval_seconds"], minimum=15, maximum=3600)
             elif key == "notify_on_startup_if_available":
@@ -367,7 +376,7 @@ def update_config(payload):
             elif isinstance(value, str):
                 value = value.strip()
             config[key] = value
-            changed[key] = value
+            changed[key] = "configured" if key == "bark_key" else value
         save_json(CONFIG_PATH, config)
     wake_event.set()
     add_log("info", "配置已保存。")

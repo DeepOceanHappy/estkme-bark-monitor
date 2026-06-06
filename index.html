@@ -390,7 +390,7 @@
           <form id="configForm">
             <div class="field">
               <label for="barkKey">Bark Key 或完整 Bark 地址</label>
-              <input id="barkKey" name="bark_key" autocomplete="off" placeholder="例如 xxxxxxxxxxxxx">
+              <input id="barkKey" name="bark_key" autocomplete="off" placeholder="留空表示不修改已保存的 Key">
             </div>
             <div class="field-row">
               <div class="field">
@@ -452,6 +452,16 @@
       return String(value);
     }
 
+    function escapeHtml(value) {
+      return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;',
+      }[char]));
+    }
+
     function setPill(snapshot, error) {
       const pill = $('buyState');
       pill.className = 'pill';
@@ -494,7 +504,8 @@
       $('lastNotify').textContent = st.last_notified_at ? `${st.last_notified_at}：${st.last_notify_reason || ''}` : '-';
       $('lastError').textContent = error ? `最近错误：${error.message}` : '';
 
-      $('barkKey').value = cfg.bark_key || '';
+      $('barkKey').value = '';
+      $('barkKey').placeholder = cfg.bark_key_configured ? '已配置，留空不修改' : '例如 xxxxxxxxxxxxx';
       $('intervalSeconds').value = cfg.interval_seconds || 60;
       $('variantTitleInput').value = cfg.variant_title || 'ESTKme Max';
       $('productApi').value = cfg.product_api || '';
@@ -507,8 +518,8 @@
       $('logs').innerHTML = logs.length
         ? logs.map((log) => `
             <div class="log">
-              <div class="log-time">${log.time || ''}</div>
-              <div class="log-message level-${log.level || 'info'}">${log.message || ''}</div>
+              <div class="log-time">${escapeHtml(log.time)}</div>
+              <div class="log-message level-${escapeHtml(log.level || 'info')}">${escapeHtml(log.message)}</div>
             </div>
           `).join('')
         : '<div class="log"><div class="log-time">-</div><div class="log-message">暂无记录</div></div>';
@@ -560,6 +571,9 @@
       const payload = Object.fromEntries(form.entries());
       payload.interval_seconds = Number(payload.interval_seconds || 60);
       payload.notify_on_startup_if_available = $('startupNotify').checked;
+      if (!String(payload.bark_key || '').trim()) {
+        delete payload.bark_key;
+      }
 
       $('formStatus').textContent = '正在保存...';
       try {
